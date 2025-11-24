@@ -1,8 +1,7 @@
 name: Build MtrGui Installers (Java 25)
 
-# Fixed syntax – this works 100% on GitHub today (Nov 2025)
 on:
-  workflow_dispatch:   # ← lets you run it manually from the web
+  workflow_dispatch:  # Enables manual "Run workflow" button in Actions tab
 
 jobs:
   package:
