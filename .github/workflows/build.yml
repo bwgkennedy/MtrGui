@@ -1,1 +1,68 @@
+name: Build MtrGui Installers (Java 25)
 
+# Fixed syntax – this works 100% on GitHub today (Nov 2025)
+on:
+  workflow_dispatch:   # ← lets you run it manually from the web
+
+jobs:
+  package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn -B clean package -DskipTests
+
+      - name: Build Linux installers
+        if: runner.os == 'Linux'
+        run: |
+          jpackage --name MtrGui \
+                   --input target \
+                   --main-jar MtrGui-jar-with-dependencies.jar \
+                   --main-class MtrGui \
+                   --app-version 1.0 \
+                   --vendor "Your Name" \
+                   --icon icon.png \
+                   --type deb --dest output-deb
+
+          jpackage --type rpm --dest output-rpm \
+                   --name MtrGui --input target --main-jar MtrGui-jar-with-dependencies.jar \
+                   --main-class MtrGui --app-version 1.0 --vendor "Your Name" --icon icon.png
+
+          jpackage --type app-image --dest output-appimage \
+                   --name MtrGui --input target --main-jar MtrGui-jar-with-dependencies.jar \
+                   --main-class MtrGui --icon icon.png
+
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: |
+          jpackage --name MtrGui `
+                   --input target `
+                   --main-jar MtrGui-jar-with-dependencies.jar `
+                   --main-class MtrGui `
+                   --icon icon.ico `
+                   --app-version 1.0 `
+                   --vendor "Your Name" `
+                   --win-menu --win-shortcut --win-dir-chooser `
+                   --type msi --dest output-msi
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: MtrGui-${{ runner.os }}-installers-Java25
+          path: |
+            output-deb/*
+            output-rpm/*
+            output-appimage/*
+            output-msi/*
